@@ -1,10 +1,40 @@
+"""
+This module contains functions to scrape news articles from the Vietnamnet news website.
+"""
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 
 def fetch_news_links(driver, page_idx):
-    """Lấy danh sách URL bài viết từ trang chính."""
+    """
+    Retrieve a set of article URLs from the main news page.
+
+    This function navigates to a specific page of the Vietnamnet news website and extracts 
+    the URLs of articles from the page. It waits for the elements containing news links 
+    to load before extracting them.
+
+    Args:
+        driver (webdriver.Chrome): The Selenium WebDriver instance controlling the browser.
+        page_idx (int): The page index to fetch news links from.
+
+    Returns:
+        set: A set of unique article URLs found on the page.
+
+    Behavior:
+        - The function constructs the target URL using `page_idx` and opens it with Selenium.
+        - It waits up to 5 seconds for the news elements to load.
+        - Extracts `href` attributes from the identified elements.
+        - If an error occurs or no links are found, it returns an empty set.
+
+    Example:
+        >>> driver = setup_driver()
+        >>> news_links = fetch_news_links(driver, 1)
+        >>> print(news_links)
+
+    Raises:
+        TimeoutException: If the elements are not found within the specified wait time.
+    """
     main_url = f'https://vietnamnet.vn/thoi-su-page{page_idx}'
     driver.get(main_url)
 
@@ -15,11 +45,40 @@ def fetch_news_links(driver, page_idx):
         )
         return {tag.get_attribute('href') for tag in news_tags if tag.get_attribute('href')}
     except:
-        return set()  # Trả về tập rỗng nếu lỗi
+        return set()  # Return an empty set if an error occurs
 
 
 def scrape_article(driver, url):
-    """Trích xuất nội dung bài viết từ URL."""
+    """
+    Extract the main content of an article from a given URL.
+
+    This function navigates to a specific article page and extracts key content, including 
+    the title, abstract, author, and body text. It ensures that articles containing videos 
+    are ignored.
+
+    Args:
+        driver (webdriver.Chrome): The Selenium WebDriver instance controlling the browser.
+        url (str): The URL of the article to scrape.
+
+    Returns:
+        str or None: The extracted article content formatted as a text string, or None if the 
+        article is unavailable or contains only a video.
+
+    Behavior:
+        - The function loads the article page and waits up to 5 seconds for the main content.
+        - It checks whether the article contains only a video and discards it if so.
+        - Extracts and formats the title, abstract, author, and article body.
+        - If the article lacks meaningful text, it returns None.
+
+    Example:
+        >>> driver = setup_driver()
+        >>> article_content = scrape_article(driver, "https://vietnamnet.vn/example-article")
+        >>> if article_content:
+        >>>     print(article_content)
+
+    Raises:
+        TimeoutException: If the article content does not load within the wait time.
+    """
     driver.get(url)
 
     main_content_xpath = '//div[@class="content-detail"]'
@@ -30,11 +89,12 @@ def scrape_article(driver, url):
     except:
         return None
 
-    # Kiểm tra bài viết có chứa video không
+    # Check if the article contains a video
     if main_content_tag.find_elements(By.XPATH, '//div[@class="video-detail"]'):
         return None
 
     def extract_text(xpath, by=By.XPATH):
+        """Helper function to extract text content from an element."""
         try:
             return main_content_tag.find_element(by, xpath).text.strip()
         except:
