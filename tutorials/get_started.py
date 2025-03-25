@@ -23,6 +23,7 @@ url = "https://www.python.org/"
 driver.get(url)
 
 # Find the element using its specific XPath
+# XPath is a language for finding nodes in XML documents
 element = driver.find_element(
     By.XPATH, # Search by XPath
     '/html/body/div/header/div/div[3]/p' # XPath of the element
