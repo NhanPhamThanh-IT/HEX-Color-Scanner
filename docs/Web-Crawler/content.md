@@ -72,7 +72,7 @@ Web Crawlers have many important applications:
 
 Web Crawlers are powerful tools that automatically collect data from the Internet. However, using Web Crawlers requires adherence to ethical guidelines, website policies, and technical measures to address challenges during the data crawling process.
 
----
+<hr>
 
 This document provides an overview of Web Crawlers, from concepts to practical applications. If you need to implement a Web Crawler system, choose the right tools and comply with both technical and legal principles.
 
