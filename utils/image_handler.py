@@ -7,6 +7,7 @@ extract pixel data, identify dominant colors, and perform color clustering using
 Classes:
     ImageHandler: A class for handling image processing and color extraction operations.
 """
+
 from PIL import Image
 from sklearn.cluster import KMeans
 import numpy as np
@@ -24,41 +25,36 @@ class ImageHandler:
         image (PIL.Image.Image): The loaded image in RGB format.
         pixels (list): List of RGB tuples representing all pixels in the image.
     """
-    
-    def __init__(self, image_path: str):
+
+    def __init__(self, image_file):
         """
         Initializes the ImageHandler with an image file.
         
-        Opens the image from the specified path and converts it to RGB format.
+        Opens the image from the specified path or file object and converts it to RGB format.
         Extracts all pixel data as RGB tuples for further processing.
         
         Args:
-            image_path (str): Path to the image file to be loaded.
+            image_file: Path to the image file or file-like object (e.g., Streamlit UploadedFile).
             
         Raises:
             FileNotFoundError: If the image file doesn't exist.
             PIL.UnidentifiedImageError: If the file is not a valid image.
         """
-        self.image = Image.open(image_path).convert("RGB")
+        self.image = Image.open(image_file).convert("RGB")
         self.pixels = list(self.image.getdata())
-        
+
     def get_pixels(self):
         """
         Returns the pixel data of the image as a list of RGB tuples.
         
-        This method provides access to the raw pixel data of the image,
-        which is stored as a list of RGB tuples, where each tuple contains
-        three integer values representing red, green, and blue color channels.
-        
         Returns:
             list: A list of RGB tuples, where each tuple contains three integers
-                 in the range [0, 255] representing the red, green, and blue
-                 color values for each pixel in the image.
-                 
+                  in the range [0, 255] representing red, green, and blue color channels.
+        
         Example:
             >>> handler = ImageHandler('image.jpg')
             >>> pixels = handler.get_pixels()
-            >>> print(pixels[0])  # Print the RGB values of the first pixel
+            >>> print(pixels[0])
             (255, 240, 230)
         """
         return self.pixels
@@ -67,39 +63,30 @@ class ImageHandler:
         """
         Displays the image.
         
-        Returns the PIL Image object for display purposes. In interactive
-        environments like Jupyter notebooks, the returned image will be
-        automatically displayed. In other environments, you may need to
-        use PIL's built-in show() method on the returned object.
-        
         Returns:
             PIL.Image.Image: The loaded image in RGB format.
-            
+        
         Example:
             >>> handler = ImageHandler('image.jpg')
             >>> image = handler.show()
-            >>> # For non-interactive environments:
-            >>> # image.show()
+            >>> # image.show()  # Uncomment in non-interactive environments
         """
         return self.image
 
     def get_important_pixels(self):
         """
-        Returns the most common colors in the image.
+        Returns the 10 most common colors in the image.
         
-        This method counts the occurrences of each unique RGB color in the image
-        and returns the 10 most frequently occurring colors. This is useful for
-        identifying the predominant colors in an image without performing clustering.
+        This method identifies and returns the top 10 most frequent RGB values
+        appearing in the image based on pixel counts.
         
         Returns:
-            list: A list of the 10 most common RGB tuples in the image, ordered
-                 by frequency (most common first). Each tuple contains three integers
-                 in the range [0, 255] representing the red, green, and blue values.
-                 
+            list: A list of the 10 most common RGB tuples sorted by frequency in descending order.
+        
         Example:
             >>> handler = ImageHandler('image.jpg')
             >>> common_colors = handler.get_important_pixels()
-            >>> print(f"The most common color is RGB{common_colors[0]}")
+            >>> print(f"Most common color: {common_colors[0]}")
         """
         color_counts = Counter(self.pixels)
         most_common_colors = color_counts.most_common(10)
@@ -107,17 +94,34 @@ class ImageHandler:
 
     def get_group_important_pixels(self, num_colors: int = 20):
         """
-        Returns dominant color groups using KMeans clustering with a default number of clusters.
-        :return: List of RGB tuples representing dominant colors, sorted by frequency.
+        Returns dominant color groups in the image using KMeans clustering.
+        
+        This method applies KMeans clustering to group similar colors in the image,
+        returning the cluster centers sorted by frequency of occurrence.
+        
+        Args:
+            num_colors (int): The number of color clusters to form. Default is 20.
+        
+        Returns:
+            list: A list of RGB tuples representing dominant colors, sorted from most to least frequent.
+        
+        Raises:
+            ValueError: If num_colors is less than 1 or more than the number of pixels.
+        
+        Example:
+            >>> handler = ImageHandler('image.jpg')
+            >>> dominant_colors = handler.get_group_important_pixels(num_colors=5)
+            >>> print(dominant_colors)
         """
-        pixel_array = np.array(self.pixels)
+        if num_colors < 1 or num_colors > len(self.pixels):
+            raise ValueError("num_colors must be between 1 and the number of pixels in the image.")
 
+        pixel_array = np.array(self.pixels)
         kmeans = KMeans(n_clusters=num_colors, random_state=42)
         labels = kmeans.fit_predict(pixel_array)
         centers = kmeans.cluster_centers_
 
         counts = Counter(labels)
-
         sorted_clusters = sorted(counts.items(), key=lambda x: -x[1])
         sorted_colors = [tuple(map(int, centers[cluster_idx])) for cluster_idx, _ in sorted_clusters]
         return sorted_colors
