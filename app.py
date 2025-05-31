@@ -17,7 +17,7 @@ if uploaded_file:
     handler = ImageHandler(uploaded_file)
     st.image(handler.show(), caption="Uploaded image", use_container_width=True)
 
-    pixels = handler.get_pixels()
+    pixels = handler.get_group_important_pixels()
     extractor = ColorExtractor(pixels)
     hex_colors = extractor.extract_unique_hex()
     st.success(f"Found {len(hex_colors)} unique HEX color codes.")
