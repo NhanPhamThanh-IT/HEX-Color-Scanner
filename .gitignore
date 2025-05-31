@@ -32,3 +32,6 @@ build/
 nhanpham/
 myenv/
 venv/
+
+# Testing
+test/
